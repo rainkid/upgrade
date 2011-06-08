@@ -2,251 +2,251 @@
 !defined('P_W') && exit('Forbidden');
 /**
  *
- * ÎÄ¼þ²Ù×÷Àà
+ * æ–‡ä»¶æ“ä½œç±»
  * @author hu.liaoh
  */
 Class PW_FileSystem{
-	/**
-	 *
-	 * ½âÑ¹ÎÄ¼þ
-	 * @param string $package
-	 * @param string $dir
-	 */
-	function unzipFile( $package , $dir ){
-		@ini_set('memory_limit', '256M');
-		if( class_exists('ZipArchive')){
-			return $this->_unzipFileZiparchive( $package, $dir );
-		}
-		return $this->_unzipFilePclzip( $package, $dir );
-	}
+    /**
+     *
+     * è§£åŽ‹æ–‡ä»¶
+     * @param string $package
+     * @param string $dir
+     */
+    function unzipFile( $package , $dir ){
+        @ini_set('memory_limit', '256M');
+        if( class_exists('ZipArchive')){
+            return $this->_unzipFileZiparchive( $package, $dir );
+        }
+        return $this->_unzipFilePclzip( $package, $dir );
+    }
 
-	/**
-	 *
-	 * Ñ¹ËõÎÄ¼þ
-	 * @param String $package Ñ¹ËõÎÄ¼þÂ·¾¶
-	 * @param String $packageName Ñ¹Ëõ°üÃû³Æ£¬Èç:test,Ñ¹ËõÎªzipÑ¹Ëõ°ü
-	 * @param String $localname Ñ¹Ëõ°ü¸ùÄ¿Â¼ÎÄ¼þÃû
-	 */
-	function zipFile( $package , $packageName, $localname ){
-		if( class_exists('ZipArchive') ){
-			return $this->_zipFileZiparchive( $package, $packageName.'.zip' , $localname);
-		}
-		return $this->_zipFilePclzip( $package, $packageName.'.zip' , $localname);
-	}
+    /**
+     *
+     * åŽ‹ç¼©æ–‡ä»¶
+     * @param String $package åŽ‹ç¼©æ–‡ä»¶è·¯å¾„
+     * @param String $packageName åŽ‹ç¼©åŒ…åç§°ï¼Œå¦‚:test,åŽ‹ç¼©ä¸ºzipåŽ‹ç¼©åŒ…
+     * @param String $localname åŽ‹ç¼©åŒ…æ ¹ç›®å½•æ–‡ä»¶å
+     */
+    function zipFile( $package , $packageName, $localname ){
+        if( class_exists('ZipArchive') ){
+            return $this->_zipFileZiparchive( $package, $packageName.'.zip' , $localname);
+        }
+        return $this->_zipFilePclzip( $package, $packageName.'.zip' , $localname);
+    }
 
-	/**
-	 *
-	 * ZipArchive ½âÑ¹Ñ¹Ëõ°ü
-	 * @param string $package
-	 * @param string $dir
-	 */
-	function _unzipFileZiparchive( $package, $dir){
-		$archive = new ZipArchive();
-		$zopen = $archive->open($package, ZipArchive::CHECKCONS);
-		if( !$zopen) exit('ZipArchive open failed');
-		$list = $archive->extractTo($dir);
-		$archive->close();
-		return $list;
-	}
+    /**
+     *
+     * ZipArchive è§£åŽ‹åŽ‹ç¼©åŒ…
+     * @param string $package
+     * @param string $dir
+     */
+    function _unzipFileZiparchive( $package, $dir){
+        $archive = new ZipArchive();
+        $zopen = $archive->open($package, ZipArchive::CHECKCONS);
+        if( !$zopen) exit('ZipArchive open failed');
+        $list = $archive->extractTo($dir);
+        $archive->close();
+        return $list;
+    }
 
-	/**
-	 *
-	 * ZiparchiveÐÎÊ½Ñ¹ËõÎÄ¼þ
-	 * @param String $package Ñ¹ËõÎÄ¼þÂ·¾¶
-	 * @param String $packageName Ñ¹Ëõ°üÃû³Æ£¬Èç£ºtest.zip
-	 * @param String $localname Ñ¹ËõÒª¸ùÎÄ¼þ¼ÐÃû³Æ
-	 */
-	function _zipFileZiparchive( $package, $packageName, $localname){
-		$archive = new ZipArchive();
-		$packageName = $packageName;
-		$zopen = $archive->open( $packageName, ZipArchive::CREATE );
-		if( !$zopen ) exit('ZipArchive open failed');
-		$list = $this->_archiveAddDir( &$archive, $package, $localname,$packageName );
-		if(!$list) exit('ÎÄ¼þÑ¹ËõÊ§°Ü');
-		$archive->close();
-		return $list;
-	}
+    /**
+     *
+     * Ziparchiveå½¢å¼åŽ‹ç¼©æ–‡ä»¶
+     * @param String $package åŽ‹ç¼©æ–‡ä»¶è·¯å¾„
+     * @param String $packageName åŽ‹ç¼©åŒ…åç§°ï¼Œå¦‚ï¼štest.zip
+     * @param String $localname åŽ‹ç¼©è¦æ ¹æ–‡ä»¶å¤¹åç§°
+     */
+    function _zipFileZiparchive( $package, $packageName, $localname){
+        $archive = new ZipArchive();
+        $packageName = $packageName;
+        $zopen = $archive->open( $packageName, ZipArchive::CREATE );
+        if( !$zopen ) exit('ZipArchive open failed');
+        $list = $this->_archiveAddDir( &$archive, $package, $localname,$packageName );
+        if(!$list) exit('æ–‡ä»¶åŽ‹ç¼©å¤±è´¥');
+        $archive->close();
+        return $list;
+    }
 
-	/**
-	 *
-	 * ZipArchiveÌí¼ÓÄ¿Â¼¼°Ä¿Â¼ÏÂËùÓÐÎÄ¼þ
-	 * @param Object $archive ZipArchive ¶ÔÏóÒýÓÃ
-	 * @param String $path ÎÄ¼þÄ¿Â¼Â·¾¶
-	 * @param String $localname Ñ¹Ëõ°ü¸ùÄ¿Â¼ÎÄ¼þ¼ÐÃû
-	 * @param String $packageName Ñ¹Ëõ°üÃû³Æ
-	 */
-	function _archiveAddDir( $archive, $path, $localname, $packageName) {
-		if(!$archive->addEmptyDir($localname)) return false;
-		$nodes = glob($path . '/*');
-		foreach ($nodes as $node) {
-			// see: http://bugs.php.net/bug.php?id=40494
-			// and: http://pecl.php.net/bugs/bug.php?id=9443
-			if($archive->numFiles % 200 == 0){
-				$archive->close();
-				if(!$archive->open($packageName, ZipArchive::CREATE)) return false;
-			}
-			$partes = pathinfo($node);
-			if (is_dir($node)) {
-				$this->_archiveAddDir($archive, $path."/".$partes["basename"], $localname."/".$partes["basename"], $packageName);
-			} else if (is_file($node))  {
-				if(!$archive->addFile(str_replace("\\","/",$node), $localname . '/' .$partes['basename'])) return false;
-			}
-		}
-		return true;
-	}
+    /**
+     *
+     * ZipArchiveæ·»åŠ ç›®å½•åŠç›®å½•ä¸‹æ‰€æœ‰æ–‡ä»¶
+     * @param Object $archive ZipArchive å¯¹è±¡å¼•ç”¨
+     * @param String $path æ–‡ä»¶ç›®å½•è·¯å¾„
+     * @param String $localname åŽ‹ç¼©åŒ…æ ¹ç›®å½•æ–‡ä»¶å¤¹å
+     * @param String $packageName åŽ‹ç¼©åŒ…åç§°
+     */
+    function _archiveAddDir( $archive, $path, $localname, $packageName) {
+        if(!$archive->addEmptyDir($localname)) return false;
+        $nodes = glob($path . '/*');
+        foreach ($nodes as $node) {
+            // see: http://bugs.php.net/bug.php?id=40494
+            // and: http://pecl.php.net/bugs/bug.php?id=9443
+            if($archive->numFiles % 200 == 0){
+                $archive->close();
+                if(!$archive->open($packageName, ZipArchive::CREATE)) return false;
+            }
+            $partes = pathinfo($node);
+            if (is_dir($node)) {
+                $this->_archiveAddDir($archive, $path."/".$partes["basename"], $localname."/".$partes["basename"], $packageName);
+            } else if (is_file($node))  {
+                if(!$archive->addFile(str_replace("\\","/",$node), $localname . '/' .$partes['basename'])) return false;
+            }
+        }
+        return true;
+    }
 
-	/**
-	 *
-	 * PclZip ½âÑ¹Ñ¹Ëõ°ü
-	 * @param string $package
-	 * @param string $dir
-	 */
-	function _unzipFilePclzip( $package, $dir ){
-		require_once( 'pclzip.class.php' );
-		$archive = new PclZip($package);
-		$list = $archive->extract(PCLZIP_OPT_PATH, $dir);
-		if (!$list) exit($archive->errorInfo(true));
-		return $list;
-	}
+    /**
+     *
+     * PclZip è§£åŽ‹åŽ‹ç¼©åŒ…
+     * @param string $package
+     * @param string $dir
+     */
+    function _unzipFilePclzip( $package, $dir ){
+        require_once( 'pclzip.class.php' );
+        $archive = new PclZip($package);
+        $list = $archive->extract(PCLZIP_OPT_PATH, $dir);
+        if (!$list) exit($archive->errorInfo(true));
+        return $list;
+    }
 
-	/**
-	 *
-	 * PclzipÐÎÊ½Ñ¹ËõÎÄ¼þ
-	 * @param String $package Ñ¹ËõÎÄ¼þÂ·¾¶
-	 * @param String $packageName Ñ¹Ëõ°üÃû³Æ£¬Èç£ºtest.zip
-	 * @param String $localname Ñ¹ËõÒª¸ùÎÄ¼þ¼ÐÃû³Æ
-	 */
-	function _zipFilePclzip( $package, $packageName , $localname){
-		require_once( 'pclzip.class.php' );
-		$archive = new PclZip($packageName);
-		$remove = $dir = $package;
-		if (substr($dir, 1, 1) == ':') $remove = substr($dir, 2);
-		$list = $archive->create($dir, PCLZIP_OPT_REMOVE_PATH, $remove, PCLZIP_OPT_ADD_PATH, $localname);
-		if ($list == 0) {
-			exit("Error : ".$archive->errorInfo(true));
-		}
-	}
+    /**
+     *
+     * Pclzipå½¢å¼åŽ‹ç¼©æ–‡ä»¶
+     * @param String $package åŽ‹ç¼©æ–‡ä»¶è·¯å¾„
+     * @param String $packageName åŽ‹ç¼©åŒ…åç§°ï¼Œå¦‚ï¼štest.zip
+     * @param String $localname åŽ‹ç¼©è¦æ ¹æ–‡ä»¶å¤¹åç§°
+     */
+    function _zipFilePclzip( $package, $packageName , $localname){
+        require_once( 'pclzip.class.php' );
+        $archive = new PclZip($packageName);
+        $remove = $dir = $package;
+        if (substr($dir, 1, 1) == ':') $remove = substr($dir, 2);
+        $list = $archive->create($dir, PCLZIP_OPT_REMOVE_PATH, $remove, PCLZIP_OPT_ADD_PATH, $localname);
+        if ($list == 0) {
+            exit("Error : ".$archive->errorInfo(true));
+        }
+    }
 
-	/**
-	 *
-	 * ´´½¨Ä¿Â¼£¬Ö§³ÖµÝ¹é´´½¨Ä¿Â¼
-	 * @param String $dirName Òª´´½¨µÄÄ¿Â¼
-	 * @param int $mode Ä¿Â¼È¨ÏÞ
-	 */
-	function smkdir($dirName, $mode = 0777) {
-		$dirs = explode('/', str_replace('\\', '/', $dirName));
-		$dir='';
-		foreach ($dirs as $part) {
-			$dir.=$part.'/';
-			if (!is_dir($dir) && strlen($dir)>0){
-				if(!@mkdir($dir, $mode)) return false;
-				if(!@chmod($dir, $mode)) return false;
-			}
-		}
-		return true;
-	}
+    /**
+     *
+     * åˆ›å»ºç›®å½•ï¼Œæ”¯æŒé€’å½’åˆ›å»ºç›®å½•
+     * @param String $dirName è¦åˆ›å»ºçš„ç›®å½•
+     * @param int $mode ç›®å½•æƒé™
+     */
+    function smkdir($dirName, $mode = 0777) {
+        $dirs = explode('/', str_replace('\\', '/', $dirName));
+        $dir='';
+        foreach ($dirs as $part) {
+            $dir.=$part.'/';
+            if (!is_dir($dir) && strlen($dir)>0){
+                if(!@mkdir($dir, $mode)) return false;
+                if(!@chmod($dir, $mode)) return false;
+            }
+        }
+        return true;
+    }
 
-	/**
-	 *
-	 * ´´½¨ÎÄ¼þ£¬Èç¹ûÄ¿Â¼²»´æÔÚ£¬»á×Ô¶¯´´½¨Ä¿Â¼
-	 * @param String $filename ÎÄ¼þÃû³Æ
-	 * @param Int $mode ÎÄ¼þÈ¨ÏÞ
-	 */
-	function touchFile($filename, $mode = 0777){
-		if( !file_exists(dirname($filename)) ) $this->smkdir(dirname($filename));
-		if( !touch( $filename) ) return false;
-		if( !chmod($filename, $mode) ) return false;
-		return true;
-	}
+    /**
+     *
+     * åˆ›å»ºæ–‡ä»¶ï¼Œå¦‚æžœç›®å½•ä¸å­˜åœ¨ï¼Œä¼šè‡ªåŠ¨åˆ›å»ºç›®å½•
+     * @param String $filename æ–‡ä»¶åç§°
+     * @param Int $mode æ–‡ä»¶æƒé™
+     */
+    function touchFile($filename, $mode = 0777){
+        if( !file_exists(dirname($filename)) ) $this->smkdir(dirname($filename));
+        if( !touch( $filename) ) return false;
+        if( !chmod($filename, $mode) ) return false;
+        return true;
+    }
 
-	/**
-	 *
-	 * É¾³ýÄ¿Â¼£¬Ö§³ÖµÝ¹éÉ¾³ý¶à¼¶Ä¿Â¼
-	 * @param String $dir Ä¿Â¼
-	 */
-	function srmdir( $dir ){
-		if (!file_exists($dir)) return true;
-		if (!is_dir($dir) || is_link($dir)) return unlink($dir);
-		foreach (scandir($dir) as $item) {
-			if ($item == '.' || $item == '..') continue;
-			if (!$this->srmdir($dir . "/" . $item)) {
-				chmod($dir . "/" . $item, 0777);
-				if (!$this->srmdir($dir . "/" . $item)) return false;
-			};
-		}
-		return rmdir($dir);
-	}
+    /**
+     *
+     * åˆ é™¤ç›®å½•ï¼Œæ”¯æŒé€’å½’åˆ é™¤å¤šçº§ç›®å½•
+     * @param String $dir ç›®å½•
+     */
+    function srmdir( $dir ){
+        if (!file_exists($dir)) return true;
+        if (!is_dir($dir) || is_link($dir)) return unlink($dir);
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') continue;
+            if (!$this->srmdir($dir . "/" . $item)) {
+                chmod($dir . "/" . $item, 0777);
+                if (!$this->srmdir($dir . "/" . $item)) return false;
+            };
+        }
+        return rmdir($dir);
+    }
 
-	/**
-	 *
-	 * ¿½±»ÎÄ¼þ
-	 * @param String $src Ô´Ä¿Â¼
-	 * @param String $dst Ä¿±êkÄ¿Â¼
-	 */
-	function scopy($src,$dst) {
-		$dir = opendir($src);
-		if(!$this->smkdir($dst)) return false;
-		while(false !== ( $file = readdir($dir)) ) {
-			if (( $file != '.' ) && ( $file != '..' )) {
-				if ( is_dir($src . '/' . $file) ) {
-					$this->smkdir($dst . '/' . $file);
-					$this->scopy($src . '/' . $file,$dst . '/' . $file);
-				}
-				else {
-					if(!copy($src . '/' . $file,$dst . '/' . $file)) return false;
-				}
-			}
-		}
-		closedir($dir);
-		return true;
-	}
+    /**
+     *
+     * æ‹·è¢«æ–‡ä»¶
+     * @param String $src æºç›®å½•
+     * @param String $dst ç›®æ ‡kç›®å½•
+     */
+    function scopy($src,$dst) {
+        $dir = opendir($src);
+        if(!$this->smkdir($dst)) return false;
+        while(false !== ( $file = readdir($dir)) ) {
+            if (( $file != '.' ) && ( $file != '..' )) {
+                if ( is_dir($src . '/' . $file) ) {
+                    $this->smkdir($dst . '/' . $file);
+                    $this->scopy($src . '/' . $file,$dst . '/' . $file);
+                }
+                else {
+                    if(!copy($src . '/' . $file,$dst . '/' . $file)) return false;
+                }
+            }
+        }
+        closedir($dir);
+        return true;
+    }
 
-	/**
-	 *
-	 * »ñÈ¡md5_fileÎÄ¼þÊý×é
-	 * @param String $dir Ä¿Â¼
-	 * @param String $ext ¼ì²éÎÄ¼þºó×ºÃû
-	 * @param Bool $sub ÊÇ·ñ¼ì²é×ÓÄ¿Â¼
-	 */
-	function safefile(&$md5_a, $dir, $ext='', $sub=1){
-		$exts = '/(' . $ext . ')$/i';
-		$fp = opendir( $dir );
-		while($filename = readdir( $fp )){
-			$path = $dir.$filename;
-			if($filename != '.' && $filename != '..' && (preg_match($exts, $filename ) || $sub && is_dir( $path ))){
-				if($sub && is_dir($path)){
-					$this->safefile(&$md5_a, $path.'/',$ext, $sub);
-				} else{
-					$md5_a[$path] = md5_file($path);
-				}
-			}
-		}
-		closedir($fp);
-	}
+    /**
+     *
+     * èŽ·å–md5_fileæ–‡ä»¶æ•°ç»„
+     * @param String $dir ç›®å½•
+     * @param String $ext æ£€æŸ¥æ–‡ä»¶åŽç¼€å
+     * @param Bool $sub æ˜¯å¦æ£€æŸ¥å­ç›®å½•
+     */
+    function safefile(&$md5_a, $dir, $ext='', $sub=1){
+        $exts = '/(' . $ext . ')$/i';
+        $fp = opendir( $dir );
+        while($filename = readdir( $fp )){
+            $path = $dir.$filename;
+            if($filename != '.' && $filename != '..' && (preg_match($exts, $filename ) || $sub && is_dir( $path ))){
+                if($sub && is_dir($path)){
+                    $this->safefile(&$md5_a, $path.'/',$ext, $sub);
+                } else{
+                    $md5_a[$path] = md5_file($path);
+                }
+            }
+        }
+        closedir($fp);
+    }
 
-	/**
-	 * 
-	 * ¸ù¾Ýmd5ÎÄ¼þ¼ì²éÎÄ¼þ
-	 * @param Array $check Êä³ö
-	 * @param String $keyword 
-	 * @param String $dir
-	 * @param String $sub
-	 */
-	function checkfile( &$check, $keyword, $dir, $sub ){
-		$fp = opendir( $dir );
-		while($filename = readdir( $fp )){
-			$path = $dir . $filename;
-			if( $filename != '.' && $filename != '..' ){
-				if( is_dir( $path ) ){
-					$sub && $this->checkfile( &$check, $keyword, $path . '/', $sub );
-				} elseif( preg_match( '/(\.php|\.php3|\.htm|\.js)$/i', $filename ) && filesize( $path ) < 1048576 ){
-					$a = strtolower( readover( $path ) );
-					if( strpos( $a, $keyword ) !== false ){
-						$check[$path] = 1;
-					}
-				}
-			}
-		}
-		closedir($fp);
-	}
+    /**
+     * 
+     * æ ¹æ®md5æ–‡ä»¶æ£€æŸ¥æ–‡ä»¶
+     * @param Array $check è¾“å‡º
+     * @param String $keyword 
+     * @param String $dir
+     * @param String $sub
+     */
+    function checkfile( &$check, $keyword, $dir, $sub ){
+        $fp = opendir( $dir );
+        while($filename = readdir( $fp )){
+            $path = $dir . $filename;
+            if( $filename != '.' && $filename != '..' ){
+                if( is_dir( $path ) ){
+                    $sub && $this->checkfile( &$check, $keyword, $path . '/', $sub );
+                } elseif( preg_match( '/(\.php|\.php3|\.htm|\.js)$/i', $filename ) && filesize( $path ) < 1048576 ){
+                    $a = strtolower( readover( $path ) );
+                    if( strpos( $a, $keyword ) !== false ){
+                        $check[$path] = 1;
+                    }
+                }
+            }
+        }
+        closedir($fp);
+    }
 }

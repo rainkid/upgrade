@@ -2,597 +2,597 @@
 !defined('P_W') && exit('Forbidden');
 Class PW_Http{
 
-	/**
-	 *
-	 * ÊÊÅäÊÊºÏµÄÏÂÔØÀà
-	 * @param array $args
-	 */
-	function getTransport($args = array()){
-		static $transports;
+    /**
+     *
+     * é€‚é…é€‚åˆçš„ä¸‹è½½ç±»
+     * @param array $args
+     */
+    function getTransport($args = array()){
+        static $transports;
 
-		if ( !$transports ) {
-			if ( true === PW_Http_Ext::test($args) ) $transports['ext'] = & new PW_Http_Ext();
-			if ( true === PW_Http_Curl::test($args) ) $transports['curl'] = & new PW_Http_Curl();
-			if ( true === PW_Http_Streams::test($args) ) $transports['streams'] = & new PW_Http_Streams();
-			if ( true === PW_Http_Fopen::test($args) ) $transports['fopen'] = & new PW_Http_Fopen();
-			if ( true === PW_Http_Fsockopen::test($args) ) $transports['fsockopen'] = & new PW_Http_Fsockopen();
-		}
-		return $transports;
-	}
+        if ( !$transports ) {
+            if ( true === PW_Http_Ext::test($args) ) $transports['ext'] = & new PW_Http_Ext();
+            if ( true === PW_Http_Curl::test($args) ) $transports['curl'] = & new PW_Http_Curl();
+            if ( true === PW_Http_Streams::test($args) ) $transports['streams'] = & new PW_Http_Streams();
+            if ( true === PW_Http_Fopen::test($args) ) $transports['fopen'] = & new PW_Http_Fopen();
+            if ( true === PW_Http_Fsockopen::test($args) ) $transports['fsockopen'] = & new PW_Http_Fsockopen();
+        }
+        return $transports;
+    }
 
-	/**
-	 *
-	 * ·¢ËÍÇëÇó
-	 * @param string $url
-	 * @param array $args
-	 */
-	function request( $url, $args = array() ) {
-		$arrUrl = parse_url($url);
-		if ( empty( $url ) || empty( $arrUrl['scheme'] ) ) $this->msg('ÏÂÔØµØÖ·²»ÕýÈ·');
-		$check = @parse_url($url);
-		if ( $check === false ) $this->msg('URL²»ÕýÈ·');
-		if ( $check['host'] == 'localhost') $this->msg('±¾µØÎÄ¼þÎÞÐèÏÂÔØ');
-		$transports = $this->getTransport( $args );
-		$response = array( 'headers' => array(), 'body' => '', 'response' => array('code' => false, 'message' => false), 'cookies' => array() );
-		foreach ( (array) $transports as $transport ) {
-			$response = $transport->request($url, $args);
-			if ( $response['response']['code'] == '200' ) return $response;
-		}
-		return $response;
-	}
+    /**
+     *
+     * å‘é€è¯·æ±‚
+     * @param string $url
+     * @param array $args
+     */
+    function request( $url, $args = array() ) {
+        $arrUrl = parse_url($url);
+        if ( empty( $url ) || empty( $arrUrl['scheme'] ) ) $this->msg('ä¸‹è½½åœ°å€ä¸æ­£ç¡®');
+        $check = @parse_url($url);
+        if ( $check === false ) $this->msg('URLä¸æ­£ç¡®');
+        if ( $check['host'] == 'localhost') $this->msg('æœ¬åœ°æ–‡ä»¶æ— éœ€ä¸‹è½½');
+        $transports = $this->getTransport( $args );
+        $response = array( 'headers' => array(), 'body' => '', 'response' => array('code' => false, 'message' => false), 'cookies' => array() );
+        foreach ( (array) $transports as $transport ) {
+            $response = $transport->request($url, $args);
+            if ( $response['response']['code'] == '200' ) return $response;
+        }
+        return $response;
+    }
 
-	/**
-	 * 
-	 * ÐÅÏ¢ÌáÊ¾£¬ÎÄ¼þÀ©Õ¹
-	 * @param String $str ÐÅÏ¢ÄÚÈÝ
-	 */
-	function msg($str){
-		adminmsg($str);
-	}
+    /**
+     * 
+     * ä¿¡æ¯æç¤ºï¼Œæ–‡ä»¶æ‰©å±•
+     * @param String $str ä¿¡æ¯å†…å®¹
+     */
+    function msg($str){
+        adminmsg($str);
+    }
 }
 
 /**
  *
- * HttpÏÂÔØ»ùÀà
+ * Httpä¸‹è½½åŸºç±»
  * @author hu.liaoh
  *
  */
 Class PW_Http_Base{
-	var $defaults = array(
-			'method' => 'POST', 'timeout' => 300,
-			'redirection' => 5, 'httpversion' => '1.0',
-			'headers' => array(), 'body' => null, 'cookies' => array()
-	);
+    var $defaults = array(
+            'method' => 'POST', 'timeout' => 300,
+            'redirection' => 5, 'httpversion' => '1.0',
+            'headers' => array(), 'body' => null, 'cookies' => array()
+    );
 
-	/**
-	 *
-	 * ºÏ²¢²ÎÊý
-	 * @param array $args
-	 * @param array $defaults
-	 */
-	function parseArgs($args, $defaults){
-		$pwEncoding = new PW_Http_Encoding();
-		if ( ! is_array($args['headers']) ) {
-			$processedHeaders = $this->getHeaders($args['headers']);
-			$args['headers'] = $processedHeaders['headers'];
-		}
-		if ( $pwEncoding->is_available() )	$args['headers']['Accept-Encoding'] = $pwEncoding->accept_encoding();
-		if ( isset($args['headers']['User-Agent']) ) $defaults['user-agent'] = $args['headers']['User-Agent'];
-		foreach ( $args as $key => $value ) {
-			if (isset($defaults[$key])) $defaults[$key] = $value;
-		}
-		return $defaults;
-	}
+    /**
+     *
+     * åˆå¹¶å‚æ•°
+     * @param array $args
+     * @param array $defaults
+     */
+    function parseArgs($args, $defaults){
+        $pwEncoding = new PW_Http_Encoding();
+        if ( ! is_array($args['headers']) ) {
+            $processedHeaders = $this->getHeaders($args['headers']);
+            $args['headers'] = $processedHeaders['headers'];
+        }
+        if ( $pwEncoding->is_available() )  $args['headers']['Accept-Encoding'] = $pwEncoding->accept_encoding();
+        if ( isset($args['headers']['User-Agent']) ) $defaults['user-agent'] = $args['headers']['User-Agent'];
+        foreach ( $args as $key => $value ) {
+            if (isset($defaults[$key])) $defaults[$key] = $value;
+        }
+        return $defaults;
+    }
 
-	/**
-	 *
-	 * ¶ÔÊäÈëÄÚÈÝ½øÐÐUtf8×ªÂë
-	 * @param String $body
-	 */
-	function chunkTransferDecode($body) {
-		$body = str_replace(array("\r\n", "\r"), "\n", $body);
-		if ( ! preg_match( '/^[0-9a-f]+(\s|\n)+/mi', trim($body) ) ) return $body;
-		$parsedBody = '';
-		$hasChunk = (bool) preg_match( '/^([0-9a-f]+)(\s|\n)+/mi', $body, $match );
-		if ( $hasChunk ) {
-			if ( empty( $match[1] ) ) return $body;
-			$length = hexdec( $match[1] );
-			$chunkLength = strlen( $match[0] );
-			$strBody = substr($body, $chunkLength, $length);
-			$parsedBody .= $strBody;
-			$body = ltrim(str_replace(array($match[0], $strBody), '', $body), "\n");
-			if ( "0" == trim($body) ) return $parsedBody;
-		}
-		return $body;
-	}
+    /**
+     *
+     * å¯¹è¾“å…¥å†…å®¹è¿›è¡ŒUtf8è½¬ç 
+     * @param String $body
+     */
+    function chunkTransferDecode($body) {
+        $body = str_replace(array("\r\n", "\r"), "\n", $body);
+        if ( ! preg_match( '/^[0-9a-f]+(\s|\n)+/mi', trim($body) ) ) return $body;
+        $parsedBody = '';
+        $hasChunk = (bool) preg_match( '/^([0-9a-f]+)(\s|\n)+/mi', $body, $match );
+        if ( $hasChunk ) {
+            if ( empty( $match[1] ) ) return $body;
+            $length = hexdec( $match[1] );
+            $chunkLength = strlen( $match[0] );
+            $strBody = substr($body, $chunkLength, $length);
+            $parsedBody .= $strBody;
+            $body = ltrim(str_replace(array($match[0], $strBody), '', $body), "\n");
+            if ( "0" == trim($body) ) return $parsedBody;
+        }
+        return $body;
+    }
 
-	/**
-	 *
-	 * ½âÎöÍ·ÐÅÏ¢
-	 * @param String $headers
-	 */
-	function getHeaders($headers) {
-		if ( is_string($headers) ) {
-			$headers = str_replace("\r\n", "\n", $headers);
-			$headers = preg_replace('/\n[ \t]/', ' ', $headers);
-			$headers = explode("\n", $headers);
-		}
+    /**
+     *
+     * è§£æžå¤´ä¿¡æ¯
+     * @param String $headers
+     */
+    function getHeaders($headers) {
+        if ( is_string($headers) ) {
+            $headers = str_replace("\r\n", "\n", $headers);
+            $headers = preg_replace('/\n[ \t]/', ' ', $headers);
+            $headers = explode("\n", $headers);
+        }
 
-		$response = array('code' => 0, 'message' => '');
-		for ( $i = count($headers)-1; $i >= 0; $i-- ) {
-			if ( !empty($headers[$i]) && false === strpos($headers[$i], ':') ) {
-				$headers = array_splice($headers, $i);
-				break;
-			}
-		}
+        $response = array('code' => 0, 'message' => '');
+        for ( $i = count($headers)-1; $i >= 0; $i-- ) {
+            if ( !empty($headers[$i]) && false === strpos($headers[$i], ':') ) {
+                $headers = array_splice($headers, $i);
+                break;
+            }
+        }
 
-		$cookies = array();
-		$newheaders = array();
-		foreach ( $headers as $tempheader ) {
-			if ( empty($tempheader) ) continue;
-			if ( false === strpos($tempheader, ':') ) {
-				list( , $response['code'], $response['message']) = explode(' ', $tempheader, 3);
-				continue;
-			}
-			list($key, $value) = explode(':', $tempheader, 2);
-			if ( !empty( $value ) ) {
-				$key = strtolower( $key );
-				if ( isset( $newheaders[$key] ) ) {
-					if ( !is_array($newheaders[$key]) )	$newheaders[$key] = array($newheaders[$key]);
-					$newheaders[$key][] = trim( $value );
-				} else {
-					$newheaders[$key] = trim( $value );
-				}
-				if ( 'set-cookie' == strtolower( $key ) ) $cookies[] = new PW_Http_Cookie( $value );
-			}
-		}
-		return array('response' => $response, 'headers' => $newheaders, 'cookies' => $cookies);
-	}
+        $cookies = array();
+        $newheaders = array();
+        foreach ( $headers as $tempheader ) {
+            if ( empty($tempheader) ) continue;
+            if ( false === strpos($tempheader, ':') ) {
+                list( , $response['code'], $response['message']) = explode(' ', $tempheader, 3);
+                continue;
+            }
+            list($key, $value) = explode(':', $tempheader, 2);
+            if ( !empty( $value ) ) {
+                $key = strtolower( $key );
+                if ( isset( $newheaders[$key] ) ) {
+                    if ( !is_array($newheaders[$key]) ) $newheaders[$key] = array($newheaders[$key]);
+                    $newheaders[$key][] = trim( $value );
+                } else {
+                    $newheaders[$key] = trim( $value );
+                }
+                if ( 'set-cookie' == strtolower( $key ) ) $cookies[] = new PW_Http_Cookie( $value );
+            }
+        }
+        return array('response' => $response, 'headers' => $newheaders, 'cookies' => $cookies);
+    }
 
-	/**
-	 *
-	 * ¸ù¾Ý²ÎÊý×é×°headerÍ·×Ö·û´®
-	 * @param array $r
-	 */
-	function buildCookieHeader( &$r ) {
-		if ( ! empty($r['cookies']) ) {
-			$cookies_header = '';
-			foreach ( (array) $r['cookies'] as $cookie ) {
-				$cookies_header .= $cookie->getHeaderValue() . '; ';
-			}
-			$cookies_header = substr( $cookies_header, 0, -2 );
-			$r['headers']['cookie'] = $cookies_header;
-		}
-	}
+    /**
+     *
+     * æ ¹æ®å‚æ•°ç»„è£…headerå¤´å­—ç¬¦ä¸²
+     * @param array $r
+     */
+    function buildCookieHeader( &$r ) {
+        if ( ! empty($r['cookies']) ) {
+            $cookies_header = '';
+            foreach ( (array) $r['cookies'] as $cookie ) {
+                $cookies_header .= $cookie->getHeaderValue() . '; ';
+            }
+            $cookies_header = substr( $cookies_header, 0, -2 );
+            $r['headers']['cookie'] = $cookies_header;
+        }
+    }
 
-	/**
-	 *
-	 * ¸ù¾Ý×´Ì¬Âë»ñµÃ¶ÔÓ¦ µÄÃèÊö×Ö·û´®
-	 * @param Int $code
-	 */
-	function getHeaderDesc( $code ) {
-		global $headerDesc;
+    /**
+     *
+     * æ ¹æ®çŠ¶æ€ç èŽ·å¾—å¯¹åº” çš„æè¿°å­—ç¬¦ä¸²
+     * @param Int $code
+     */
+    function getHeaderDesc( $code ) {
+        global $headerDesc;
 
-		$code = abs( intval($code ));
+        $code = abs( intval($code ));
 
-		if ( !isset( $headerDesc ) ) {
-			$headerDesc = array(
-			100 => 'Continue',
-			101 => 'Switching Protocols',
-			102 => 'Processing',
+        if ( !isset( $headerDesc ) ) {
+            $headerDesc = array(
+            100 => 'Continue',
+            101 => 'Switching Protocols',
+            102 => 'Processing',
 
-			200 => 'OK',
-			201 => 'Created',
-			202 => 'Accepted',
-			203 => 'Non-Authoritative Information',
-			204 => 'No Content',
-			205 => 'Reset Content',
-			206 => 'Partial Content',
-			207 => 'Multi-Status',
-			226 => 'IM Used',
+            200 => 'OK',
+            201 => 'Created',
+            202 => 'Accepted',
+            203 => 'Non-Authoritative Information',
+            204 => 'No Content',
+            205 => 'Reset Content',
+            206 => 'Partial Content',
+            207 => 'Multi-Status',
+            226 => 'IM Used',
 
-			300 => 'Multiple Choices',
-			301 => 'Moved Permanently',
-			302 => 'Found',
-			303 => 'See Other',
-			304 => 'Not Modified',
-			305 => 'Use Proxy',
-			306 => 'Reserved',
-			307 => 'Temporary Redirect',
+            300 => 'Multiple Choices',
+            301 => 'Moved Permanently',
+            302 => 'Found',
+            303 => 'See Other',
+            304 => 'Not Modified',
+            305 => 'Use Proxy',
+            306 => 'Reserved',
+            307 => 'Temporary Redirect',
 
-			400 => 'Bad Request',
-			401 => 'Unauthorized',
-			402 => 'Payment Required',
-			403 => 'Forbidden',
-			404 => 'Not Found',
-			405 => 'Method Not Allowed',
-			406 => 'Not Acceptable',
-			407 => 'Proxy Authentication Required',
-			408 => 'Request Timeout',
-			409 => 'Conflict',
-			410 => 'Gone',
-			411 => 'Length Required',
-			412 => 'Precondition Failed',
-			413 => 'Request Entity Too Large',
-			414 => 'Request-URI Too Long',
-			415 => 'Unsupported Media Type',
-			416 => 'Requested Range Not Satisfiable',
-			417 => 'Expectation Failed',
-			422 => 'Unprocessable Entity',
-			423 => 'Locked',
-			424 => 'Failed Dependency',
-			426 => 'Upgrade Required',
+            400 => 'Bad Request',
+            401 => 'Unauthorized',
+            402 => 'Payment Required',
+            403 => 'Forbidden',
+            404 => 'Not Found',
+            405 => 'Method Not Allowed',
+            406 => 'Not Acceptable',
+            407 => 'Proxy Authentication Required',
+            408 => 'Request Timeout',
+            409 => 'Conflict',
+            410 => 'Gone',
+            411 => 'Length Required',
+            412 => 'Precondition Failed',
+            413 => 'Request Entity Too Large',
+            414 => 'Request-URI Too Long',
+            415 => 'Unsupported Media Type',
+            416 => 'Requested Range Not Satisfiable',
+            417 => 'Expectation Failed',
+            422 => 'Unprocessable Entity',
+            423 => 'Locked',
+            424 => 'Failed Dependency',
+            426 => 'Upgrade Required',
 
-			500 => 'Internal Server Error',
-			501 => 'Not Implemented',
-			502 => 'Bad Gateway',
-			503 => 'Service Unavailable',
-			504 => 'Gateway Timeout',
-			505 => 'HTTP Version Not Supported',
-			506 => 'Variant Also Negotiates',
-			507 => 'Insufficient Storage',
-			510 => 'Not Extended'
-			);
-		}
-		return isset( $headerDesc[$code] ) ? $headerDesc[$code] : '';
-	}
+            500 => 'Internal Server Error',
+            501 => 'Not Implemented',
+            502 => 'Bad Gateway',
+            503 => 'Service Unavailable',
+            504 => 'Gateway Timeout',
+            505 => 'HTTP Version Not Supported',
+            506 => 'Variant Also Negotiates',
+            507 => 'Insufficient Storage',
+            510 => 'Not Extended'
+            );
+        }
+        return isset( $headerDesc[$code] ) ? $headerDesc[$code] : '';
+    }
 
-	/**
-	 *
-	 * ·¢ËÍÇëÇó
-	 * @param String $url
-	 * @param Array $args
-	 */
-	function request($url, $args = array()){}
-	/**
-	 *
-	 * ²âÊÔ½Ó¿Ú
-	 * @param Array $args
-	 */
-	function test($args = array()){}
+    /**
+     *
+     * å‘é€è¯·æ±‚
+     * @param String $url
+     * @param Array $args
+     */
+    function request($url, $args = array()){}
+    /**
+     *
+     * æµ‹è¯•æŽ¥å£
+     * @param Array $args
+     */
+    function test($args = array()){}
 
-	function msg($str){
-		adminmsg($str);
-	}
+    function msg($str){
+        adminmsg($str);
+    }
 }
 
 /**
  *
- * Curl À©Õ¹ÏÂÔØÎÄ¼þÀà
+ * Curl æ‰©å±•ä¸‹è½½æ–‡ä»¶ç±»
  * @author hu.liaoh
  *
  */
 Class PW_Http_Curl extends PW_Http_Base{
 
-	/**
-	 * (non-PHPdoc)
-	 * @see PW_Http_Base::request()
-	 */
-	function request($url, $args = array()){
-		$r = $this->parseArgs($args, $this->defaults);
+    /**
+     * (non-PHPdoc)
+     * @see PW_Http_Base::request()
+     */
+    function request($url, $args = array()){
+        $r = $this->parseArgs($args, $this->defaults);
 
-		$ssl_verify = isset($args['sslverify']) && $args['sslverify'];//ÊÇ·ñ¿ªÆôÖ¤ÊéÑéÖ¤
-		$handle = curl_init();//Æô¶¯»á»°
-		$timeout = (int) ceil( $r['timeout'] );
-		curl_setopt( $handle, CURLOPT_CONNECTTIMEOUT, $timeout );//Á¬½Ó³¬Ê±Ê±¼ä
-		curl_setopt( $handle, CURLOPT_TIMEOUT, $timeout );
-		curl_setopt( $handle, CURLOPT_URL, $url);
-		curl_setopt( $handle, CURLOPT_RETURNTRANSFER, true );//ÒÔÁ÷µÄÐÎÊ½·µ»Ø
-		curl_setopt( $handle, CURLOPT_SSL_VERIFYHOST, $ssl_verify );//¶ÔÈÏÖ¤Ö¤ÊéÀ´Ô´µÄ¼ì²é
-		curl_setopt( $handle, CURLOPT_SSL_VERIFYPEER, $ssl_verify );//´ÓÖ¤ÊéÖÐ¼ì²éSSL¼ÓÃÜËã·¨ÊÇ·ñ´æÔÚ
-		curl_setopt( $handle, CURLOPT_USERAGENT, $r['user-agent'] );//Ä£ÄâÓÃ»§Ê¹ÓÃµÄä¯ÀÀÆ÷
-		curl_setopt( $handle, CURLOPT_MAXREDIRS, $r['redirection'] );//ÔÊÐí×Ô¶¯Ìø×ªµÄ´ÎÊý
-		curl_setopt( $handle, CURLOPT_HEADER, true ); //ÊÇ·ñÏÔÊ¾·µ»ØµÄHeaderÇøÓòÄÚÈÝ
-		curl_setopt( $handle, CURLOPT_POST, true );//ÒÔPOST·½Ê½·¢ËÍ
-		curl_setopt( $handle, CURLOPT_POSTFIELDS, $r['body'] );//·¢ËÍµÄÊý¾Ý°ü
-		if ( !ini_get('safe_mode') && !ini_get('open_basedir')) curl_setopt( $handle, CURLOPT_FOLLOWLOCATION, true );//ÊÇ·ñ×÷ÎªhttpÍ·µÄÒ»²¿·Ö·µ»Ø·ÅÔÚLocation:ÀïÃæ
-		if ( !empty( $r['headers'] ) ) {
-			$headers = array();
-			foreach ( $r['headers'] as $name => $value ) {
-				$headers[] = "{$name}: $value";
-			}
-			curl_setopt( $handle, CURLOPT_HTTPHEADER, $headers );
-		}
-		$curlVersion = ($r['httpversion'] == '1.0') ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1;
-		curl_setopt( $handle, CURLOPT_HTTP_VERSION, $curlVersion );
-		$theResponse = curl_exec( $handle );
-		if ( !empty($theResponse) ) {
-			$headerLength = curl_getinfo($handle, CURLINFO_HEADER_SIZE);
-			$theHeaders = trim( substr($theResponse, 0, $headerLength) );
-			$theBody = ( strlen($theResponse) > $headerLength ) ? substr( $theResponse, $headerLength ) : '';
-			if ( false !== strrpos($theHeaders, "\r\n\r\n") ) {
-				$headerParts = explode("\r\n\r\n", $theHeaders);
-				$theHeaders = $headerParts[ count($headerParts) -1 ];
-			}
-			$theHeaders = $this->getHeaders($theHeaders);
-		} else {
-			if ( $curl_error = curl_error($handle) ) $this->msg('CURL´íÎó:'.$curl_error);
-			if ( in_array( curl_getinfo( $handle, CURLINFO_HTTP_CODE ), array(301, 302) ) ) $this->msg('CURL´íÎó:');
-			$theHeaders = array( 'headers' => array(), 'cookies' => array() );
-			$theBody = '';
-		}
-		$response = array();
-		$response['code'] = curl_getinfo( $handle, CURLINFO_HTTP_CODE );
-		$response['message'] = $this->getHeaderDesc($response['code']);
-		curl_close( $handle );
-		return array('headers' => $theHeaders['headers'], 'body' => $theBody, 'response' => $response, 'cookies' => $theHeaders['cookies']);
-	}
+        $ssl_verify = isset($args['sslverify']) && $args['sslverify'];//æ˜¯å¦å¼€å¯è¯ä¹¦éªŒè¯
+        $handle = curl_init();//å¯åŠ¨ä¼šè¯
+        $timeout = (int) ceil( $r['timeout'] );
+        curl_setopt( $handle, CURLOPT_CONNECTTIMEOUT, $timeout );//è¿žæŽ¥è¶…æ—¶æ—¶é—´
+        curl_setopt( $handle, CURLOPT_TIMEOUT, $timeout );
+        curl_setopt( $handle, CURLOPT_URL, $url);
+        curl_setopt( $handle, CURLOPT_RETURNTRANSFER, true );//ä»¥æµçš„å½¢å¼è¿”å›ž
+        curl_setopt( $handle, CURLOPT_SSL_VERIFYHOST, $ssl_verify );//å¯¹è®¤è¯è¯ä¹¦æ¥æºçš„æ£€æŸ¥
+        curl_setopt( $handle, CURLOPT_SSL_VERIFYPEER, $ssl_verify );//ä»Žè¯ä¹¦ä¸­æ£€æŸ¥SSLåŠ å¯†ç®—æ³•æ˜¯å¦å­˜åœ¨
+        curl_setopt( $handle, CURLOPT_USERAGENT, $r['user-agent'] );//æ¨¡æ‹Ÿç”¨æˆ·ä½¿ç”¨çš„æµè§ˆå™¨
+        curl_setopt( $handle, CURLOPT_MAXREDIRS, $r['redirection'] );//å…è®¸è‡ªåŠ¨è·³è½¬çš„æ¬¡æ•°
+        curl_setopt( $handle, CURLOPT_HEADER, true ); //æ˜¯å¦æ˜¾ç¤ºè¿”å›žçš„HeaderåŒºåŸŸå†…å®¹
+        curl_setopt( $handle, CURLOPT_POST, true );//ä»¥POSTæ–¹å¼å‘é€
+        curl_setopt( $handle, CURLOPT_POSTFIELDS, $r['body'] );//å‘é€çš„æ•°æ®åŒ…
+        if ( !ini_get('safe_mode') && !ini_get('open_basedir')) curl_setopt( $handle, CURLOPT_FOLLOWLOCATION, true );//æ˜¯å¦ä½œä¸ºhttpå¤´çš„ä¸€éƒ¨åˆ†è¿”å›žæ”¾åœ¨Location:é‡Œé¢
+        if ( !empty( $r['headers'] ) ) {
+            $headers = array();
+            foreach ( $r['headers'] as $name => $value ) {
+                $headers[] = "{$name}: $value";
+            }
+            curl_setopt( $handle, CURLOPT_HTTPHEADER, $headers );
+        }
+        $curlVersion = ($r['httpversion'] == '1.0') ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1;
+        curl_setopt( $handle, CURLOPT_HTTP_VERSION, $curlVersion );
+        $theResponse = curl_exec( $handle );
+        if ( !empty($theResponse) ) {
+            $headerLength = curl_getinfo($handle, CURLINFO_HEADER_SIZE);
+            $theHeaders = trim( substr($theResponse, 0, $headerLength) );
+            $theBody = ( strlen($theResponse) > $headerLength ) ? substr( $theResponse, $headerLength ) : '';
+            if ( false !== strrpos($theHeaders, "\r\n\r\n") ) {
+                $headerParts = explode("\r\n\r\n", $theHeaders);
+                $theHeaders = $headerParts[ count($headerParts) -1 ];
+            }
+            $theHeaders = $this->getHeaders($theHeaders);
+        } else {
+            if ( $curl_error = curl_error($handle) ) $this->msg('CURLé”™è¯¯:'.$curl_error);
+            if ( in_array( curl_getinfo( $handle, CURLINFO_HTTP_CODE ), array(301, 302) ) ) $this->msg('CURLé”™è¯¯:');
+            $theHeaders = array( 'headers' => array(), 'cookies' => array() );
+            $theBody = '';
+        }
+        $response = array();
+        $response['code'] = curl_getinfo( $handle, CURLINFO_HTTP_CODE );
+        $response['message'] = $this->getHeaderDesc($response['code']);
+        curl_close( $handle );
+        return array('headers' => $theHeaders['headers'], 'body' => $theBody, 'response' => $response, 'cookies' => $theHeaders['cookies']);
+    }
 
-	/**
-	 * (non-PHPdoc)
-	 * @see PW_Http_Base::test()
-	 */
-	function test($args = array()){
-		if ( function_exists('curl_init') && function_exists('curl_exec') ) return true;
-		return false;
-	}
+    /**
+     * (non-PHPdoc)
+     * @see PW_Http_Base::test()
+     */
+    function test($args = array()){
+        if ( function_exists('curl_init') && function_exists('curl_exec') ) return true;
+        return false;
+    }
 }
 
 /**
  *
- * Fopen ·½Ê½ÏÂÔØÎÄ¼þÀà
+ * Fopen æ–¹å¼ä¸‹è½½æ–‡ä»¶ç±»
  * @author hu.liaoh
  *
  */
 Class PW_Http_Fopen extends PW_Http_Base{
 
-	/**
-	 * (non-PHPdoc)  ·¢ËÍÇëÇó
-	 * @see PW_Http_Base::request()
-	 */
-	function request($url, $args = array()){
-		$httpEncoding = new PW_Http_Encoding();
-		$r = $this->parseArgs( $args, $this->defaults );
-		$arrUrl = parse_url( $url );
-		if ( false === $arrUrl ) $this->msg( 'ÏÂÔØµØÖ·´íÎó' );
-		if ( 'http' != $arrUrl['scheme'] && 'https' != $arrUrl['scheme'] )	$url = str_replace( $arrUrl['scheme'], 'http', $url );
-		if ( is_null( $r['headers'] ) ) $r['headers'] = array();
-		if ( is_string($r['headers']) ) {
-			$processedHeaders = $this->getHeaders($r['headers']);
-			$r['headers'] = $processedHeaders['headers'];
-		}
-		$initial_user_agent = ini_get('user_agent');
-		if ( !empty($r['headers']) && is_array($r['headers']) ) {
-			$user_agent_extra_headers = '';
-			foreach ( $r['headers'] as $header => $value ){
-				$user_agent_extra_headers .= "\r\n$header: $value";
-			}
-			@ini_set('user_agent', $r['user-agent'] . $user_agent_extra_headers);
-		} else {
-			@ini_set('user_agent', $r['user-agent']);
-		}
-		$handle = fopen($url, 'r');
-		if (! $handle) $this->msg( 'fopen£ºÎÞ·¨´ò¿ªÏÂÔØµØÖ·' );
-		$timeout = (int) floor( $r['timeout'] );
-		$utimeout = $timeout == $r['timeout'] ? 0 : 1000000 * $r['timeout'] % 1000000;
-		stream_set_timeout( $handle, $timeout, $utimeout );
+    /**
+     * (non-PHPdoc)  å‘é€è¯·æ±‚
+     * @see PW_Http_Base::request()
+     */
+    function request($url, $args = array()){
+        $httpEncoding = new PW_Http_Encoding();
+        $r = $this->parseArgs( $args, $this->defaults );
+        $arrUrl = parse_url( $url );
+        if ( false === $arrUrl ) $this->msg( 'ä¸‹è½½åœ°å€é”™è¯¯' );
+        if ( 'http' != $arrUrl['scheme'] && 'https' != $arrUrl['scheme'] )  $url = str_replace( $arrUrl['scheme'], 'http', $url );
+        if ( is_null( $r['headers'] ) ) $r['headers'] = array();
+        if ( is_string($r['headers']) ) {
+            $processedHeaders = $this->getHeaders($r['headers']);
+            $r['headers'] = $processedHeaders['headers'];
+        }
+        $initial_user_agent = ini_get('user_agent');
+        if ( !empty($r['headers']) && is_array($r['headers']) ) {
+            $user_agent_extra_headers = '';
+            foreach ( $r['headers'] as $header => $value ){
+                $user_agent_extra_headers .= "\r\n$header: $value";
+            }
+            @ini_set('user_agent', $r['user-agent'] . $user_agent_extra_headers);
+        } else {
+            @ini_set('user_agent', $r['user-agent']);
+        }
+        $handle = fopen($url, 'r');
+        if (! $handle) $this->msg( 'fopenï¼šæ— æ³•æ‰“å¼€ä¸‹è½½åœ°å€' );
+        $timeout = (int) floor( $r['timeout'] );
+        $utimeout = $timeout == $r['timeout'] ? 0 : 1000000 * $r['timeout'] % 1000000;
+        stream_set_timeout( $handle, $timeout, $utimeout );
 
-		$strResponse = '';
-		while ( ! feof($handle) ){
-			$strResponse .= fread( $handle, 4096 );
-		}
+        $strResponse = '';
+        while ( ! feof($handle) ){
+            $strResponse .= fread( $handle, 4096 );
+        }
 
-		if ( function_exists('stream_get_meta_data') ) {
-			$meta = stream_get_meta_data($handle);
-			$theHeaders = $meta['wrapper_data'];
-			if ( isset( $meta['wrapper_data']['headers'] ) ) $theHeaders = $meta['wrapper_data']['headers'];
-		} else {
-			//$http_response_headerÍ¨¹ýHttp·â×°ÔÚµ±Ç°×÷ÓÃÓòÖÐµÄÒ»¸ö±äÁ¿ÏêÏ¸Çë²Î¿¼ http://php.oregonstate.edu/manual/en/reserved.variables.httpresponseheader.php
-			$theHeaders = $http_response_header;
-		}
-		fclose($handle);
-		@ini_set('user_agent', $initial_user_agent); //»¹Ô­user_agentÉèÖÃ
-		$processedHeaders = $this->getHeaders($theHeaders);
-		if ( ! empty( $strResponse ) && isset( $processedHeaders['headers']['transfer-encoding'] ) && 'chunked' == $processedHeaders['headers']['transfer-encoding'] )
-		$strResponse = $this->chunkTransferDecode($strResponse);
-		if ( true === $r['decompress'] && true === $httpEncoding->should_decode($processedHeaders['headers']) ) $strResponse = $httpEncoding->decompress( $strResponse );
+        if ( function_exists('stream_get_meta_data') ) {
+            $meta = stream_get_meta_data($handle);
+            $theHeaders = $meta['wrapper_data'];
+            if ( isset( $meta['wrapper_data']['headers'] ) ) $theHeaders = $meta['wrapper_data']['headers'];
+        } else {
+            //$http_response_headeré€šè¿‡Httpå°è£…åœ¨å½“å‰ä½œç”¨åŸŸä¸­çš„ä¸€ä¸ªå˜é‡è¯¦ç»†è¯·å‚è€ƒ http://php.oregonstate.edu/manual/en/reserved.variables.httpresponseheader.php
+            $theHeaders = $http_response_header;
+        }
+        fclose($handle);
+        @ini_set('user_agent', $initial_user_agent); //è¿˜åŽŸuser_agentè®¾ç½®
+        $processedHeaders = $this->getHeaders($theHeaders);
+        if ( ! empty( $strResponse ) && isset( $processedHeaders['headers']['transfer-encoding'] ) && 'chunked' == $processedHeaders['headers']['transfer-encoding'] )
+        $strResponse = $this->chunkTransferDecode($strResponse);
+        if ( true === $r['decompress'] && true === $httpEncoding->should_decode($processedHeaders['headers']) ) $strResponse = $httpEncoding->decompress( $strResponse );
 
-		return array('headers' => $processedHeaders['headers'], 'body' => $strResponse, 'response' => $processedHeaders['response'], 'cookies' => $processedHeaders['cookies']);
-	}
+        return array('headers' => $processedHeaders['headers'], 'body' => $strResponse, 'response' => $processedHeaders['response'], 'cookies' => $processedHeaders['cookies']);
+    }
 
-	function test($args = array()){
-		if ( function_exists('fopen') || (function_exists('ini_get') && true == ini_get('allow_url_fopen')) ) return true;
-		return false;
-	}
+    function test($args = array()){
+        if ( function_exists('fopen') || (function_exists('ini_get') && true == ini_get('allow_url_fopen')) ) return true;
+        return false;
+    }
 }
 
 /**
  *
- * PHP À©Õ¹·½Ê½ÏÂÔØÎÄ¼þÀà
+ * PHP æ‰©å±•æ–¹å¼ä¸‹è½½æ–‡ä»¶ç±»
  * @author hu.liaoh
  *
  */
 Class PW_Http_Ext  extends PW_Http_Base{
 
-	function test($args = array()){
-		return false;
-	}
+    function test($args = array()){
+        return false;
+    }
 }
 
 /**
  *
- * Fsockopen·½Ê½ÏÂÔØÎÄ¼þÀà
+ * Fsockopenæ–¹å¼ä¸‹è½½æ–‡ä»¶ç±»
  * @author hu.liaoh
  *
  */
 Class PW_Http_Fsockopen  extends PW_Http_Base{
 
-	function test($args = array()){
-		return false;
-	}
+    function test($args = array()){
+        return false;
+    }
 }
 
 /**
  *
- * StreamsÎÄ¼þÁ÷ÐÎÊ½ÏÂÔØÎÄ¼þÀà
+ * Streamsæ–‡ä»¶æµå½¢å¼ä¸‹è½½æ–‡ä»¶ç±»
  * @author hu.liaoh
  *
  */
 Class PW_Http_Streams  extends PW_Http_Base{
-	
-	/**
-	 * (non-PHPdoc) ·¢ËÍÇëÇó
-	 * @see PW_Http_Base::request()
-	 */
-	function request($url, $args){
-		$httpEncoding = new PW_Http_Encoding();
-		$r = $this->parseArgs($args, $this->defaults);
+    
+    /**
+     * (non-PHPdoc) å‘é€è¯·æ±‚
+     * @see PW_Http_Base::request()
+     */
+    function request($url, $args){
+        $httpEncoding = new PW_Http_Encoding();
+        $r = $this->parseArgs($args, $this->defaults);
 
-		$this->buildCookieHeader( $r );
-		$arrUrl = parse_url($url);
-		if ( false === $arrUrl ) $this->msg('URL²»ÕýÈ·: '.  $url);
+        $this->buildCookieHeader( $r );
+        $arrUrl = parse_url($url);
+        if ( false === $arrUrl ) $this->msg('URLä¸æ­£ç¡®: '.  $url);
 
-		if ( 'http' != $arrUrl['scheme'] && 'https' != $arrUrl['scheme'] )
-		$url = preg_replace('|^' . preg_quote($arrUrl['scheme'], '|') . '|', 'http', $url);
+        if ( 'http' != $arrUrl['scheme'] && 'https' != $arrUrl['scheme'] )
+        $url = preg_replace('|^' . preg_quote($arrUrl['scheme'], '|') . '|', 'http', $url);
 
-		$strHeaders = '';
-		if ( is_array( $r['headers'] ) ){
-			foreach ( $r['headers'] as $name => $value ){
-				$strHeaders .= "{$name}: $value\r\n";
-			}
-		}else if ( is_string( $r['headers'] ) ){
-			$strHeaders = $r['headers'];
-		}
+        $strHeaders = '';
+        if ( is_array( $r['headers'] ) ){
+            foreach ( $r['headers'] as $name => $value ){
+                $strHeaders .= "{$name}: $value\r\n";
+            }
+        }else if ( is_string( $r['headers'] ) ){
+            $strHeaders = $r['headers'];
+        }
 
-		$ssl_verify = isset($args['sslverify']) && $args['sslverify'];
+        $ssl_verify = isset($args['sslverify']) && $args['sslverify'];
 
-		$arrContext = array('http' =>
-		array(
-				'method' => strtoupper($r['method']),
-				'user_agent' => $r['user-agent'],
-				'max_redirects' => $r['redirection'] + 1,
-				'protocol_version' => (float) $r['httpversion'],
-				'header' => $strHeaders,
-				'ignore_errors' => true, //·µ»Ø×´Ì¬Îª·Ç200µÄ´íÎó
-				'timeout' => $r['timeout'],
-				'ssl' => array(
-						'verify_peer' => $ssl_verify,
-						'verify_host' => $ssl_verify
-		)
-		)
-		);
-		if ( ! empty($r['body'] ) )	$arrContext['http']['content'] = $r['body'];
-		$context = stream_context_create($arrContext);
-		$handle = fopen($url, 'r', false, $context);
+        $arrContext = array('http' =>
+        array(
+                'method' => strtoupper($r['method']),
+                'user_agent' => $r['user-agent'],
+                'max_redirects' => $r['redirection'] + 1,
+                'protocol_version' => (float) $r['httpversion'],
+                'header' => $strHeaders,
+                'ignore_errors' => true, //è¿”å›žçŠ¶æ€ä¸ºéž200çš„é”™è¯¯
+                'timeout' => $r['timeout'],
+                'ssl' => array(
+                        'verify_peer' => $ssl_verify,
+                        'verify_host' => $ssl_verify
+        )
+        )
+        );
+        if ( ! empty($r['body'] ) ) $arrContext['http']['content'] = $r['body'];
+        $context = stream_context_create($arrContext);
+        $handle = fopen($url, 'r', false, $context);
 
-		if ( ! $handle ) $this->msg('ÎÞ·¨´ò¿ªµÄURL:' . $url );
+        if ( ! $handle ) $this->msg('æ— æ³•æ‰“å¼€çš„URL:' . $url );
 
-		$timeout = (int) floor( $r['timeout'] );
-		$utimeout = $timeout == $r['timeout'] ? 0 : 1000000 * $r['timeout'] % 1000000;
-		stream_set_timeout( $handle, $timeout, $utimeout );
-		$strResponse = stream_get_contents($handle);
-		$meta = stream_get_meta_data($handle);
-		fclose($handle);
-		$processedHeaders = array();
-		$processedHeaders = ( isset( $meta['wrapper_data']['headers'] ) ) ? $this->getHeaders($meta['wrapper_data']['headers']) :  $this->getHeaders($meta['wrapper_data']);
-		if ( ! empty( $strResponse ) && isset( $processedHeaders['headers']['transfer-encoding'] ) && 'chunked' == $processedHeaders['headers']['transfer-encoding'] ) $strResponse =$this->chunkTransferDecode($strResponse);
-		if ( true === $r['decompress'] && true === $httpEncoding->should_decode($processedHeaders['headers']) ) $strResponse = $httpEncoding->decompress( $strResponse );
-		return array('headers' => $processedHeaders['headers'], 'body' => $strResponse, 'response' => $processedHeaders['response'], 'cookies' => $processedHeaders['cookies']);
-	}
-	
-	/**
-	 * (non-PHPdoc)
-	 * @see PW_Http_Base::test()
-	 */
-	function test($args = array()){
-		if ( function_exists('fopen') || (function_exists('ini_get') && true == ini_get('allow_url_fopen')) ) return true;
-		if ( !version_compare(PHP_VERSION, '5.0', '<') ) return true;
-		return false;
-	}
+        $timeout = (int) floor( $r['timeout'] );
+        $utimeout = $timeout == $r['timeout'] ? 0 : 1000000 * $r['timeout'] % 1000000;
+        stream_set_timeout( $handle, $timeout, $utimeout );
+        $strResponse = stream_get_contents($handle);
+        $meta = stream_get_meta_data($handle);
+        fclose($handle);
+        $processedHeaders = array();
+        $processedHeaders = ( isset( $meta['wrapper_data']['headers'] ) ) ? $this->getHeaders($meta['wrapper_data']['headers']) :  $this->getHeaders($meta['wrapper_data']);
+        if ( ! empty( $strResponse ) && isset( $processedHeaders['headers']['transfer-encoding'] ) && 'chunked' == $processedHeaders['headers']['transfer-encoding'] ) $strResponse =$this->chunkTransferDecode($strResponse);
+        if ( true === $r['decompress'] && true === $httpEncoding->should_decode($processedHeaders['headers']) ) $strResponse = $httpEncoding->decompress( $strResponse );
+        return array('headers' => $processedHeaders['headers'], 'body' => $strResponse, 'response' => $processedHeaders['response'], 'cookies' => $processedHeaders['cookies']);
+    }
+    
+    /**
+     * (non-PHPdoc)
+     * @see PW_Http_Base::test()
+     */
+    function test($args = array()){
+        if ( function_exists('fopen') || (function_exists('ini_get') && true == ini_get('allow_url_fopen')) ) return true;
+        if ( !version_compare(PHP_VERSION, '5.0', '<') ) return true;
+        return false;
+    }
 }
 
 /**
  *
- * ÎÄ¼þ±àÂë½âÂëÀà
+ * æ–‡ä»¶ç¼–ç è§£ç ç±»
  * @author hu.liaoh
  *
  */
 class PW_Http_Encoding {
 
-	/**
-	 *
-	 * Ñ¹Ëõ×Ö·û´®
-	 * @param string $raw
-	 * @param int $level
-	 */
-	function compress( $raw, $level = 9) {
-		return gzdeflate( $raw, $level );
-	}
+    /**
+     *
+     * åŽ‹ç¼©å­—ç¬¦ä¸²
+     * @param string $raw
+     * @param int $level
+     */
+    function compress( $raw, $level = 9) {
+        return gzdeflate( $raw, $level );
+    }
 
-	/**
-	 *
-	 * ½âÑ¹×Ö·û´®
-	 * @param string $compressed
-	 */
-	function decompress( $compressed) {
-		if ( empty($compressed) ) return $compressed;
-		if ( false !== ( $decompressed = @gzinflate( $compressed ) ) )	return $decompressed;
-		if ( false !== ( $decompressed = $this->compatible_gzinflate( $compressed ) ) ) return $decompressed;
-		if ( false !== ( $decompressed = @gzuncompress( $compressed ) ) )	return $decompressed;
-		if ( function_exists('gzdecode') ) {
-			$decompressed = @gzdecode( $compressed );
-			if ( false !== $decompressed ) return $decompressed;
-		}
-		return $compressed;
-	}
+    /**
+     *
+     * è§£åŽ‹å­—ç¬¦ä¸²
+     * @param string $compressed
+     */
+    function decompress( $compressed) {
+        if ( empty($compressed) ) return $compressed;
+        if ( false !== ( $decompressed = @gzinflate( $compressed ) ) )  return $decompressed;
+        if ( false !== ( $decompressed = $this->compatible_gzinflate( $compressed ) ) ) return $decompressed;
+        if ( false !== ( $decompressed = @gzuncompress( $compressed ) ) )   return $decompressed;
+        if ( function_exists('gzdecode') ) {
+            $decompressed = @gzdecode( $compressed );
+            if ( false !== $decompressed ) return $decompressed;
+        }
+        return $compressed;
+    }
 
-	/**
-	 *
-	 * Enter description here ...
-	 * @param unknown_type $gzData
-	 */
-	function compatible_gzinflate( $gzData ) {
-		if ( substr($gzData, 0, 3) == "\x1f\x8b\x08" ) {
-			$i = 10;
-			$flg = ord( substr($gzData, 3, 1) );
-			if ( $flg > 0 ) {
-				if ( $flg & 4 ) {
-					list($xlen) = unpack('v', substr($gzData, $i, 2) );
-					$i = $i + 2 + $xlen;
-				}
-				if ( $flg & 8 ) $i = strpos($gzData, "\0", $i) + 1;
-				if ( $flg & 16 ) $i = strpos($gzData, "\0", $i) + 1;
-				if ( $flg & 2 )	$i = $i + 2;
-			}
-			return gzinflate( substr($gzData, $i, -8) );
-		}
-		return false;
-	}
+    /**
+     *
+     * Enter description here ...
+     * @param unknown_type $gzData
+     */
+    function compatible_gzinflate( $gzData ) {
+        if ( substr($gzData, 0, 3) == "\x1f\x8b\x08" ) {
+            $i = 10;
+            $flg = ord( substr($gzData, 3, 1) );
+            if ( $flg > 0 ) {
+                if ( $flg & 4 ) {
+                    list($xlen) = unpack('v', substr($gzData, $i, 2) );
+                    $i = $i + 2 + $xlen;
+                }
+                if ( $flg & 8 ) $i = strpos($gzData, "\0", $i) + 1;
+                if ( $flg & 16 ) $i = strpos($gzData, "\0", $i) + 1;
+                if ( $flg & 2 ) $i = $i + 2;
+            }
+            return gzinflate( substr($gzData, $i, -8) );
+        }
+        return false;
+    }
 
-	/**
-	 *
-	 * Ñ¡Ôñ±àÂëÀàÐÍ²¢·µ»ØËüµÄÖµ
-	 */
-	function accept_encoding() {
-		$type = array();
-		if ( function_exists( 'gzinflate' ) ) $type[] = 'deflate;q=1.0';
-		if ( function_exists( 'gzuncompress' ) ) $type[] = 'compress;q=0.5';
-		if ( function_exists( 'gzdecode' ) ) $type[] = 'gzip;q=0.5';
-		return implode(', ', $type);
-	}
+    /**
+     *
+     * é€‰æ‹©ç¼–ç ç±»åž‹å¹¶è¿”å›žå®ƒçš„å€¼
+     */
+    function accept_encoding() {
+        $type = array();
+        if ( function_exists( 'gzinflate' ) ) $type[] = 'deflate;q=1.0';
+        if ( function_exists( 'gzuncompress' ) ) $type[] = 'compress;q=0.5';
+        if ( function_exists( 'gzdecode' ) ) $type[] = 'gzip;q=0.5';
+        return implode(', ', $type);
+    }
 
-	/**
-	 *
-	 * »ñÈ¡Í·ÐÅÏ¢ÖÐÄÚÈÝ±àÂë·½Ê½
-	 */
-	function content_encoding() {
-		return 'deflate';
-	}
+    /**
+     *
+     * èŽ·å–å¤´ä¿¡æ¯ä¸­å†…å®¹ç¼–ç æ–¹å¼
+     */
+    function content_encoding() {
+        return 'deflate';
+    }
 
-	/**
-	 *
-	 * ¼ì²éheaderÊÇ·ñÐèÒª±àÂë
-	 * @param String|Array $headers
-	 */
-	function should_decode($headers) {
-		if ( is_array( $headers ) && ( array_key_exists('content-encoding', $headers) && ! empty( $headers['content-encoding'] ) ) ) return true;
-		if ( is_string( $headers ) ) return ( stripos($headers, 'content-encoding:') !== false );
-		return false;
-	}
+    /**
+     *
+     * æ£€æŸ¥headeræ˜¯å¦éœ€è¦ç¼–ç 
+     * @param String|Array $headers
+     */
+    function should_decode($headers) {
+        if ( is_array( $headers ) && ( array_key_exists('content-encoding', $headers) && ! empty( $headers['content-encoding'] ) ) ) return true;
+        if ( is_string( $headers ) ) return ( stripos($headers, 'content-encoding:') !== false );
+        return false;
+    }
 
-	function is_available() {
-		return ( function_exists('gzuncompress') || function_exists('gzdeflate') || function_exists('gzinflate') );
-	}
+    function is_available() {
+        return ( function_exists('gzuncompress') || function_exists('gzdeflate') || function_exists('gzinflate') );
+    }
 }
 
 /**
@@ -603,62 +603,62 @@ class PW_Http_Encoding {
  */
 class PW_Http_Cookie {
 
-	var $name; //Cookie name
-	var $value; //Cookie value
-	var $expires; //Cookie ¹ýÆÚÊ±¼ä
-	var $path; //Cookie µØÖ·
-	var $domain; //Cookie Ö÷»ú
+    var $name; //Cookie name
+    var $value; //Cookie value
+    var $expires; //Cookie è¿‡æœŸæ—¶é—´
+    var $path; //Cookie åœ°å€
+    var $domain; //Cookie ä¸»æœº
 
-	function PW_Http_Cookie( $data ) {
-		$this->__construct( $data );
-	}
+    function PW_Http_Cookie( $data ) {
+        $this->__construct( $data );
+    }
 
-	/**
-	 * ÉèÖÃCookie.
-	 * @param string|array.
-	 */
-	function __construct( $data ) {
-		if ( is_string( $data ) ) {
-			$pairs = explode( ';', $data );
+    /**
+     * è®¾ç½®Cookie.
+     * @param string|array.
+     */
+    function __construct( $data ) {
+        if ( is_string( $data ) ) {
+            $pairs = explode( ';', $data );
 
-			// Special handling for first pair; name=value. Also be careful of "=" in value
-			$name  = trim( substr( $pairs[0], 0, strpos( $pairs[0], '=' ) ) );
-			$value = substr( $pairs[0], strpos( $pairs[0], '=' ) + 1 );
-			$this->name  = $name;
-			$this->value = urldecode( $value );
-			array_shift( $pairs ); //Removes name=value from items.
+            // Special handling for first pair; name=value. Also be careful of "=" in value
+            $name  = trim( substr( $pairs[0], 0, strpos( $pairs[0], '=' ) ) );
+            $value = substr( $pairs[0], strpos( $pairs[0], '=' ) + 1 );
+            $this->name  = $name;
+            $this->value = urldecode( $value );
+            array_shift( $pairs ); //Removes name=value from items.
 
-			foreach ( $pairs as $pair ) {
-				$pair = rtrim($pair);
-				if ( empty($pair) ) continue;
-				list( $key, $val ) = strpos( $pair, '=' ) ? explode( '=', $pair ) : array( $pair, '' );
-				$key = strtolower( trim( $key ) );
-				if ( 'expires' == $key ) $val = strtotime( $val );
-				$this->$key = $val;
-			}
-		} else {
-			if ( !isset( $data['name'] ) ) return false;
-			$this->name   = $data['name'];
-			$this->value  = isset( $data['value'] ) ? $data['value'] : '';
-			$this->path   = isset( $data['path'] ) ? $data['path'] : '';
-			$this->domain = isset( $data['domain'] ) ? $data['domain'] : '';
-			$this->expires = ( isset( $data['expires'] ) ) ? is_int( $data['expires'] ) ? $data['expires'] : strtotime( $data['expires'] ) : null;
-		}
-	}
+            foreach ( $pairs as $pair ) {
+                $pair = rtrim($pair);
+                if ( empty($pair) ) continue;
+                list( $key, $val ) = strpos( $pair, '=' ) ? explode( '=', $pair ) : array( $pair, '' );
+                $key = strtolower( trim( $key ) );
+                if ( 'expires' == $key ) $val = strtotime( $val );
+                $this->$key = $val;
+            }
+        } else {
+            if ( !isset( $data['name'] ) ) return false;
+            $this->name   = $data['name'];
+            $this->value  = isset( $data['value'] ) ? $data['value'] : '';
+            $this->path   = isset( $data['path'] ) ? $data['path'] : '';
+            $this->domain = isset( $data['domain'] ) ? $data['domain'] : '';
+            $this->expires = ( isset( $data['expires'] ) ) ? is_int( $data['expires'] ) ? $data['expires'] : strtotime( $data['expires'] ) : null;
+        }
+    }
 
-	/**
-	 * ¸ù¾ÝCookie Name ºÍ Cookie Value ·µ»ØCookie Header
-	 */
-	function getHeaderValue() {
-		if ( empty( $this->name ) || empty( $this->value ) ) return '';
-		return $this->name . '=' . urlencode( $this->value );
-	}
+    /**
+     * æ ¹æ®Cookie Name å’Œ Cookie Value è¿”å›žCookie Header
+     */
+    function getHeaderValue() {
+        if ( empty( $this->name ) || empty( $this->value ) ) return '';
+        return $this->name . '=' . urlencode( $this->value );
+    }
 
-	/**
-	 * ·µ»ØÍêÕûµÄHeader
-	 * @return string
-	 */
-	function getFullHeader() {
-		return 'Cookie: ' . $this->getHeaderValue();
-	}
+    /**
+     * è¿”å›žå®Œæ•´çš„Header
+     * @return string
+     */
+    function getFullHeader() {
+        return 'Cookie: ' . $this->getHeaderValue();
+    }
 }

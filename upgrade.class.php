@@ -2,235 +2,235 @@
 !defined('P_W') && exit('Forbidden');
 Class PW_Upgrade{
 
-	/**
-	 *
-	 * ĞÅÏ¢Êä³ö
-	 * @param String $str
-	 */
-	function msg($str){
-		showmsg($str);
-	}
+    /**
+     *
+     * ä¿¡æ¯è¾“å‡º
+     * @param String $str
+     */
+    function msg($str){
+        showmsg($str);
+    }
 
-	function before( $package ){}
-	function downLoadPackage( $package ){}
-	/**
-	 *
-	 * ½âÑ¹Ñ¹Ëõ°ü
-	 * @param string $package
-	 * @param string $deletePackage ½âÑ¹Íê³ÉºóÊÇ·ñÉ¾³ıÑ¹Ëõ°ü
-	 */
-	function unPackPackage( $package , $deletePackage = true){}
-	/**
-	 *
-	 * ±È½ÏÎÄ¼ş°æ±¾
-	 * @param string $package
-	 */
-	function checkFile( $package ){}
-	/**
-	 *
-	 * ±¸·İÎÄ¼ş
-	 * @param String $tmpdir ÎÄ¼şÄ¿Â¼
-	 * @param String $packageName Ñ¹Ëõ°üÃû³Æ
-	 */
-	function backUp( $package, $packageName = '' ){}
-	/**
-	 *
-	 * Ö´ĞĞ°²×°°ü
-	 * @param string $package
-	 */
-	function installPackage( $package , $dir){}
+    function before( $package ){}
+    function downLoadPackage( $package ){}
+    /**
+     *
+     * è§£å‹å‹ç¼©åŒ…
+     * @param string $package
+     * @param string $deletePackage è§£å‹å®Œæˆåæ˜¯å¦åˆ é™¤å‹ç¼©åŒ…
+     */
+    function unPackPackage( $package , $deletePackage = true){}
+    /**
+     *
+     * æ¯”è¾ƒæ–‡ä»¶ç‰ˆæœ¬
+     * @param string $package
+     */
+    function checkFile( $package ){}
+    /**
+     *
+     * å¤‡ä»½æ–‡ä»¶
+     * @param String $tmpdir æ–‡ä»¶ç›®å½•
+     * @param String $packageName å‹ç¼©åŒ…åç§°
+     */
+    function backUp( $package, $packageName = '' ){}
+    /**
+     *
+     * æ‰§è¡Œå®‰è£…åŒ…
+     * @param string $package
+     */
+    function installPackage( $package , $dir){}
 
-	/**
-	 *
-	 * ÔÚÏß°²×°ºó´¦Àí
-	 * @param unknown_type $package
-	 */
-	function after( $package ){}
+    /**
+     *
+     * åœ¨çº¿å®‰è£…åå¤„ç†
+     * @param unknown_type $package
+     */
+    function after( $package ){}
 
-	/**
-	 *
-	 * »ñÈ¡ÎÄ¼ş²Ù×÷Àà
-	 */
-	function getFileSys(){
-		include_once 'filesystem.class.php';;
-		static $fileSys;
-		if( !$fileSys ) $fileSys = new PW_FileSystem();
-		return $fileSys;
-	}
+    /**
+     *
+     * è·å–æ–‡ä»¶æ“ä½œç±»
+     */
+    function getFileSys(){
+        include_once 'filesystem.class.php';;
+        static $fileSys;
+        if( !$fileSys ) $fileSys = new PW_FileSystem();
+        return $fileSys;
+    }
 
-	/**
-	 *
-	 * »ñÈ¡httpÊµÀı
-	 */
-	function getHttp(){
-		return L::loadClass('http', 'upgrade');
-	}
+    /**
+     *
+     * è·å–httpå®ä¾‹
+     */
+    function getHttp(){
+        return L::loadClass('http', 'upgrade');
+    }
 }
 
 Class PW_Http_Upgrade Extends Pw_Upgrade{
 
-	/**
-	 * ÏÂÔØÇ°ÎÄ¼şÈ¨ÏŞÒÔ¼°Ä¿Â¼¿É²Ù×÷ĞÔ¼ì²é
-	 * @see PW_Upgrade::_preAction()
-	 */
-	function before( $package ){
-		if ( ! preg_match('!^(http|https|ftp)://!i', $package) && file_exists($package) )	$this->msg('Ö»Ö§³ÖÔ¶³ÌÏÂÔØ');//Ö§³ÖÔ¶³ÌÏÂÔØ£¬ftpÏÂÔØ
-		if ( empty($package) ) $this->msg("Êı¾İ°ü²»´æÔÚ");
-		if ( !defined('DOWNLOAD_DIR') || !defined('BACKUP_DIR')) $this->msg("±¸·İÎÄ¼şÄ¿Â¼Î´¶¨Òå");
-		if ( !is_dir(DOWNLOAD_DIR) ) $this->getFileSys()->smkdir( DOWNLOAD_DIR );
-		if ( !file_exists(DOWNLOAD_DIR)){
-			if( !$this->getFileSys()->smkdir( DOWNLOAD_DIR ) ) $this->msg('ÏÂÔØÄ¿Â¼²»¿ÉÓÃ');
-		}
-		if( !is_dir(BACKUP_DIR) ) $this->getFileSys()->smkdir( BACKUP_DIR );
-		if ( !file_exists(BACKUP_DIR)){
-			if( !$this->getFileSys()->smkdir( BACKUP_DIR ) ) $this->msg('±¸·İÄ¿Â¼²»¿ÉÓÃ');
-		}
-		return true;
-	}
+    /**
+     * ä¸‹è½½å‰æ–‡ä»¶æƒé™ä»¥åŠç›®å½•å¯æ“ä½œæ€§æ£€æŸ¥
+     * @see PW_Upgrade::_preAction()
+     */
+    function before( $package ){
+        if ( ! preg_match('!^(http|https|ftp)://!i', $package) && file_exists($package) )   $this->msg('åªæ”¯æŒè¿œç¨‹ä¸‹è½½');//æ”¯æŒè¿œç¨‹ä¸‹è½½ï¼Œftpä¸‹è½½
+        if ( empty($package) ) $this->msg("æ•°æ®åŒ…ä¸å­˜åœ¨");
+        if ( !defined('DOWNLOAD_DIR') || !defined('BACKUP_DIR')) $this->msg("å¤‡ä»½æ–‡ä»¶ç›®å½•æœªå®šä¹‰");
+        if ( !is_dir(DOWNLOAD_DIR) ) $this->getFileSys()->smkdir( DOWNLOAD_DIR );
+        if ( !file_exists(DOWNLOAD_DIR)){
+            if( !$this->getFileSys()->smkdir( DOWNLOAD_DIR ) ) $this->msg('ä¸‹è½½ç›®å½•ä¸å¯ç”¨');
+        }
+        if( !is_dir(BACKUP_DIR) ) $this->getFileSys()->smkdir( BACKUP_DIR );
+        if ( !file_exists(BACKUP_DIR)){
+            if( !$this->getFileSys()->smkdir( BACKUP_DIR ) ) $this->msg('å¤‡ä»½ç›®å½•ä¸å¯ç”¨');
+        }
+        return true;
+    }
 
-	/**
-	 * ÏÂÔØÎÄ¼ş
-	 * @see PW_Upgrade::downLoadPackage()
-	 */
-	function downLoadPackage( $package, $args =array() ){
-		set_time_limit(500);
-		return $this->_downLoadUrl( $package, $args);
-	}
+    /**
+     * ä¸‹è½½æ–‡ä»¶
+     * @see PW_Upgrade::downLoadPackage()
+     */
+    function downLoadPackage( $package, $args =array() ){
+        set_time_limit(500);
+        return $this->_downLoadUrl( $package, $args);
+    }
 
-	/**
-	 * ½âÑ¹ÎÄ¼ş
-	 * @see PW_Upgrade::unPackPackage()
-	 */
-	function unPackPackage( $package , $deletePackage = true ){
-		set_time_limit(500);
-		$filesys = $this->getFileSys();
-		$tmpdir = DOWNLOAD_DIR . basename($package, '.tmp');
-		$package = DOWNLOAD_DIR . $package;
-		$result = $filesys->unzipFile($package, $tmpdir);
-		if ( $deletePackage ) unlink($package);
-		if ( !$result ) $this->msg('½âÑ¹ËõÎÄ¼şÊ§°Ü');
-		return basename($tmpdir);
-	}
+    /**
+     * è§£å‹æ–‡ä»¶
+     * @see PW_Upgrade::unPackPackage()
+     */
+    function unPackPackage( $package , $deletePackage = true ){
+        set_time_limit(500);
+        $filesys = $this->getFileSys();
+        $tmpdir = DOWNLOAD_DIR . basename($package, '.tmp');
+        $package = DOWNLOAD_DIR . $package;
+        $result = $filesys->unzipFile($package, $tmpdir);
+        if ( $deletePackage ) unlink($package);
+        if ( !$result ) $this->msg('è§£å‹ç¼©æ–‡ä»¶å¤±è´¥');
+        return basename($tmpdir);
+    }
 
-	/**
-	 * (non-PHPdoc)
-	 * @see PW_Upgrade::checkFile()
-	 */
-	function checkFile( $package ){
-		if(! is_dir( $package )) return true; 
-		$md5file = trim(( $package . 'safe.md5' ));
-		if( !is_file( $md5file ) ) $this->msg('ÎÄ¼ş¼ì²émd5ÎÄ¼ş¶ªÊ§');
-		$olds = include S::escapePath( $md5file );
-		$filesys = $this->getFileSys();
-		$news = array();
-		$filesys->safefile( &$news, $package, '\.js|\.php|\.htm', 1);
-		
-		$result = array();
-		foreach($olds as $file=>$md5key){
-			$file = trim($file);
-			if(!isset($news[$file])){
-				$result[$file] = 'losted';
-			} elseif($md5key != $news[$file]){
-				$result[$file] = 'modified';
-			}
-		}
-		return $result ? $result : true; 
-	}
+    /**
+     * (non-PHPdoc)
+     * @see PW_Upgrade::checkFile()
+     */
+    function checkFile( $package ){
+        if(! is_dir( $package )) return true; 
+        $md5file = trim(( $package . 'safe.md5' ));
+        if( !is_file( $md5file ) ) $this->msg('æ–‡ä»¶æ£€æŸ¥md5æ–‡ä»¶ä¸¢å¤±');
+        $olds = include S::escapePath( $md5file );
+        $filesys = $this->getFileSys();
+        $news = array();
+        $filesys->safefile( &$news, $package, '\.js|\.php|\.htm', 1);
+        
+        $result = array();
+        foreach($olds as $file=>$md5key){
+            $file = trim($file);
+            if(!isset($news[$file])){
+                $result[$file] = 'losted';
+            } elseif($md5key != $news[$file]){
+                $result[$file] = 'modified';
+            }
+        }
+        return $result ? $result : true; 
+    }
 
-	/**
-	 *±¸·İÎÄ¼ş|Êı¾İ¿â
-	 * @see PW_Upgrade::backUp( $tmpdir, $packageName = '' )
-	 */
-	function backUp( $package, $packageName = '' ){
-		if( !is_dir( $package) ) return true;
-		set_time_limit(500);
-		!$packageName && $packageName = uniqid(time());
-		$fileSys = $this->getFileSys();
-		$ret = $fileSys->zipFile($package, BACKUP_DIR . $packageName, 'back');
-		if(! $ret ) $this->msg('ÎÄ¼ş±¸·İÊ§°Ü');
-		return true;
-	}
+    /**
+     *å¤‡ä»½æ–‡ä»¶|æ•°æ®åº“
+     * @see PW_Upgrade::backUp( $tmpdir, $packageName = '' )
+     */
+    function backUp( $package, $packageName = '' ){
+        if( !is_dir( $package) ) return true;
+        set_time_limit(500);
+        !$packageName && $packageName = uniqid(time());
+        $fileSys = $this->getFileSys();
+        $ret = $fileSys->zipFile($package, BACKUP_DIR . $packageName, 'back');
+        if(! $ret ) $this->msg('æ–‡ä»¶å¤‡ä»½å¤±è´¥');
+        return true;
+    }
 
-	/**
-	 * °²×°Êı¾İ¿â£üXcopyÎÄ¼ş
-	 * @see PW_Upgrade::installPackage()
-	 */
-	function installPackage($package, $dir = './'){
-		set_time_limit(500);
-		$package = DOWNLOAD_DIR . $package;
-		$fileSys = $this->getFileSys();
-		$ret = $fileSys->scopy($package, realpath(R_P) );
-		!$ret && $this->msg('°²×°Ê§°Ü');
-		return true;
-	}
+    /**
+     * å®‰è£…æ•°æ®åº“ï½œXcopyæ–‡ä»¶
+     * @see PW_Upgrade::installPackage()
+     */
+    function installPackage($package, $dir = './'){
+        set_time_limit(500);
+        $package = DOWNLOAD_DIR . $package;
+        $fileSys = $this->getFileSys();
+        $ret = $fileSys->scopy($package, realpath(R_P) );
+        !$ret && $this->msg('å®‰è£…å¤±è´¥');
+        return true;
+    }
 
-	/**
-	 * (non-PHPdoc) °²×°ºóÆÚ´¦Àí
-	 * @see PW_Upgrade::after()
-	 */
-	function after($package){
-		$package = DOWNLOAD_DIR . $package;
-		$this->getFileSys()->srmdir( $package );
-		return true;
-	}
-	
-	/**
-	 *
-	 * Í¨¹ıUrlÏÂÔØÎÄ¼ş
-	 * @param string $url
-	 */
-	function _downLoadUrl($url, $args){
-		!S::isArray($args) && $args = array();
-		$args = array_merge(array('timeout' => 300), $args);
-		$http = $this->getHttp();
-		!$http && $this->msg('HttpÊµÀı»¯Ê§°Ü');
-		if ( ! $url ) $this->msg('ÏÂÔØµØÖ·²»ÄÜÎª¿Õ');
-		$tmpfname = $this->tempnam();
-		if ( ! $tmpfname ) $this->msg('ÏÂÔØ»º´æÎÄ¼ş´´½¨Ê§°Ü:' . $tmpfname);
-		$handle = @fopen($tmpfname, 'wb');
-		if ( ! $handle ) $this->msg('ÎÄ¼ş´ò¿ªÊ§°Ü:'.$tmpfname);
-		$response = $http->request($url, $args);
-		if ( !($response) ) {
-			fclose($handle); unlink($tmpfname);	return $response;
-		}
-		if ( $response['response']['code'] != '200' ){
-			fclose($handle); unlink($tmpfname);	$this->msg('Ô¶³ÌÇëÇóÊ§°Ü£º'.trim($response['response']['message']));
-		}
-		fwrite($handle, $response['body']);
-		fclose($handle);
-		return basename($tmpfname);
-	}
+    /**
+     * (non-PHPdoc) å®‰è£…åæœŸå¤„ç†
+     * @see PW_Upgrade::after()
+     */
+    function after($package){
+        $package = DOWNLOAD_DIR . $package;
+        $this->getFileSys()->srmdir( $package );
+        return true;
+    }
+    
+    /**
+     *
+     * é€šè¿‡Urlä¸‹è½½æ–‡ä»¶
+     * @param string $url
+     */
+    function _downLoadUrl($url, $args){
+        !S::isArray($args) && $args = array();
+        $args = array_merge(array('timeout' => 300), $args);
+        $http = $this->getHttp();
+        !$http && $this->msg('Httpå®ä¾‹åŒ–å¤±è´¥');
+        if ( ! $url ) $this->msg('ä¸‹è½½åœ°å€ä¸èƒ½ä¸ºç©º');
+        $tmpfname = $this->tempnam();
+        if ( ! $tmpfname ) $this->msg('ä¸‹è½½ç¼“å­˜æ–‡ä»¶åˆ›å»ºå¤±è´¥:' . $tmpfname);
+        $handle = @fopen($tmpfname, 'wb');
+        if ( ! $handle ) $this->msg('æ–‡ä»¶æ‰“å¼€å¤±è´¥:'.$tmpfname);
+        $response = $http->request($url, $args);
+        if ( !($response) ) {
+            fclose($handle); unlink($tmpfname); return $response;
+        }
+        if ( $response['response']['code'] != '200' ){
+            fclose($handle); unlink($tmpfname); $this->msg('è¿œç¨‹è¯·æ±‚å¤±è´¥ï¼š'.trim($response['response']['message']));
+        }
+        fwrite($handle, $response['body']);
+        fclose($handle);
+        return basename($tmpfname);
+    }
 
-	/**
-	 *
-	 * Éú³ÉÏÂÔØÊ±µÄ»º´æÎÄ¼ş
-	 * @param String $filename »º´æÎÄ¼şÃû³Æ
-	 * @param String $dir »º´æÎÄ¼şÄ¿Â¼
-	 */
-	function tempnam($filename = '', $dir = ''){
-		if(!$dir) $dir = $this->getTempDir();
-		!$dir && $this->msg('»º´æÄ¿Â¼´´½¨Ê§°Ü');
-		$filename = basename($filename);
-		if ( empty($filename) ) $filename = time().'.tmp';
-		$filename = preg_replace('|\..*$|', '.tmp', $filename);
-		$filename = $dir .'/'. $filename;
-		$this->getFileSys()->touchFile($filename);
-		if(! @is_writable($filename) ) $this->msg('ÎÄ¼ş²»¿ÉĞ´:'.$filename);
-		return $filename;
-	}
+    /**
+     *
+     * ç”Ÿæˆä¸‹è½½æ—¶çš„ç¼“å­˜æ–‡ä»¶
+     * @param String $filename ç¼“å­˜æ–‡ä»¶åç§°
+     * @param String $dir ç¼“å­˜æ–‡ä»¶ç›®å½•
+     */
+    function tempnam($filename = '', $dir = ''){
+        if(!$dir) $dir = $this->getTempDir();
+        !$dir && $this->msg('ç¼“å­˜ç›®å½•åˆ›å»ºå¤±è´¥');
+        $filename = basename($filename);
+        if ( empty($filename) ) $filename = time().'.tmp';
+        $filename = preg_replace('|\..*$|', '.tmp', $filename);
+        $filename = $dir .'/'. $filename;
+        $this->getFileSys()->touchFile($filename);
+        if(! @is_writable($filename) ) $this->msg('æ–‡ä»¶ä¸å¯å†™:'.$filename);
+        return $filename;
+    }
 
-	/**
-	 *
-	 * »ñÈ¡»º´æÎÄ¼şÄ¿Â¼
-	 */
-	function getTempDir(){
-		static $temp;
-		if ( $temp ) return $temp;
-		$temp = DOWNLOAD_DIR;
-		if ( !file_exists($temp) ){
-			if(!$this->getFileSys()->smkdir( $temp )) return false;
-		}
-		return $temp;
-	}
+    /**
+     *
+     * è·å–ç¼“å­˜æ–‡ä»¶ç›®å½•
+     */
+    function getTempDir(){
+        static $temp;
+        if ( $temp ) return $temp;
+        $temp = DOWNLOAD_DIR;
+        if ( !file_exists($temp) ){
+            if(!$this->getFileSys()->smkdir( $temp )) return false;
+        }
+        return $temp;
+    }
 
 }
